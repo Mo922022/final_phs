@@ -1,0 +1,4 @@
+#./prtdirc -o 10m_phs_mcp_${mcp}_pix_${pix}_l3_inbar_f_180.root -s 13 -a 180 -x "opticalphoton" -p "3.18 eV" -e 10000000 -l 3 -h 1 -g 2017 -c 2017 -gsx 67 -gsy 14.7 -gx 85.0 -gz 447 -t1 $mcp -t2 $pix -b 1 -r $seed
+
+./prtdirc -o test.root -s 13 -a 90 -x "opticalphoton" -p "3.18 eV" -e 100 -l 3 -h 1 -g 2017 -c 2017 -gsx 67 -gsy 14.7 -gx 85.0 -gz 447 -t1 5 -t2 5 -r 9
+
