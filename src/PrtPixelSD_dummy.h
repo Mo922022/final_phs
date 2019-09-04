@@ -1,11 +1,11 @@
 // -----------------------------------------
-// PrtPixelSD.h
+// PrtPixelSD_dummy.h
 //
 // Author  : R.Dzhygadlo at gsi.de
 // -----------------------------------------
 
-#ifndef PrtPixelSD_h
-#define PrtPixelSD_h 1
+#ifndef PrtPixelSD_dummy_h
+#define PrtPixelSD_dummy_h 1
 
 #include "G4VSensitiveDetector.hh"
 #include "TVector3.h"
@@ -22,13 +22,13 @@ class G4HCofThisEvent;
 /// The values are accounted in hits in ProcessHits() function which is called
 /// by Geant4 kernel at each step.
 
-class PrtPixelSD : public G4VSensitiveDetector
+class PrtPixelSD_dummy : public G4VSensitiveDetector
 {
   public:
-    PrtPixelSD(const G4String& name, 
+    PrtPixelSD_dummy(const G4String& name,
                      const G4String& hitsCollectionName, 
                      G4int nofCells);
-    virtual ~PrtPixelSD();
+    virtual ~PrtPixelSD_dummy();
   
     // methods from base class
     virtual void   Initialize(G4HCofThisEvent* hitCollection);
@@ -37,18 +37,9 @@ class PrtPixelSD : public G4VSensitiveDetector
 
   private:
   G4int     fNofCells;
-  G4double fQe_space[15][64];
-  G4int fMultHit[15][64];
-    TH2F* hist_time_angle_ch[12][64];
 
 
 
-TVector3 momInBar;
- Double_t angle ;
- int kt, ka, nEntries;
-
-Double_t fAngleP;
-Double_t fAnglePi;
 };
 
 #endif

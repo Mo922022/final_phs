@@ -14,9 +14,9 @@
 PrtSteppingAction::PrtSteppingAction()
 : G4UserSteppingAction()
 { 
-  fScintillationCounter = 0;
-  fCerenkovCounter      = 0;
-  fEventNumber = -1;
+    fScintillationCounter = 0;
+    fCerenkovCounter      = 0;
+    fEventNumber = -1;
 }
 
 PrtSteppingAction::~PrtSteppingAction(){ }
@@ -24,69 +24,88 @@ PrtSteppingAction::~PrtSteppingAction(){ }
 
 void PrtSteppingAction::UserSteppingAction(const G4Step* step)
 {
-  G4int eventNumber = G4RunManager::GetRunManager()->
-                                              GetCurrentEvent()->GetEventID();
-
-  if (eventNumber != fEventNumber) {
-     // G4cout << " Number of Scintillation Photons in previous event: "
-     //        << fScintillationCounter << G4endl;
-     // G4cout << " Number of Cerenkov Photons in previous event: "
-     //        << fCerenkovCounter << G4endl;
-     fEventNumber = eventNumber;
-     fScintillationCounter = 0;
-     fCerenkovCounter = 0;
-  }
-
-  G4Track* track = step->GetTrack();
-  int parentId = track->GetParentID();
-
-  // std::cout<<"parentId   "<<parentId <<std::endl;
-  //std::cout<<"length  "<<track->GetTrackLength() << " step num "<< track->GetCurrentStepNumber() <<std::endl;
-
-  if(track->GetCurrentStepNumber()>50000 || track->GetTrackLength() > 10000) {
-    // std::cout<<"WRN: too many steps or track length > 10m  N=" <<track->GetCurrentStepNumber()<<" Len="<<track->GetTrackLength()/1000. <<std::endl;    
-    track->SetTrackStatus(fStopAndKill);
-  }
-
-  // G4cout<<step->GetPreStepPoint()->GetPhysicalVolume()->GetName()  <<" - "
-  //  	<<step->GetPostStepPoint()->GetPhysicalVolume()->GetName() <<"  "<< G4endl;
-
-  if(PrtManager::Instance()->GetRunType()==11 && step->GetPreStepPoint()->GetPhysicalVolume()->GetName()=="wBar"
-     && step->GetPostStepPoint()->GetPhysicalVolume()->GetName()=="wOpticalGrease") {
-    G4ThreeVector dir = step->GetPreStepPoint()->GetMomentum();
-    TVector3 v(dir.x(),dir.y(),dir.z());
-    v.RotateY(-(TMath::Pi()-20*TMath::Pi()/180.));
-    PrtManager::Instance()->SetMomentum(v);
-    PrtManager::Instance()->SetTime(step->GetPreStepPoint()->GetLocalTime());
-  }
-  
-  //if(step->GetPreStepPoint()->GetPhysicalVolume()->GetName()=="Bar" && step->GetPostStepPoint()->GetPhysicalVolume()->GetName()=="ExpHall" ) track->SetTrackStatus(fStopAndKill);
-  //if(step->GetPreStepPoint()->GetPosition().z()>1200 ) track->SetTrackStatus(fStopAndKill);
-
-  G4String ParticleName = track->GetDynamicParticle()->
-                                 GetParticleDefinition()->GetParticleName();
-
- 
-  
-  // std::cout<<"ParticleName "<<ParticleName <<std::endl;
-  
-  if (ParticleName == "opticalphoton") return;
-
-  const std::vector<const G4Track*>* secondaries =
-                                            step->GetSecondaryInCurrentStep();
-  
-  if (secondaries->size()>0) {
-     for(unsigned int i=0; i<secondaries->size(); ++i) {
-        if (secondaries->at(i)->GetParentID()>0) {
-           if(secondaries->at(i)->GetDynamicParticle()->GetParticleDefinition()
-               == G4OpticalPhoton::OpticalPhotonDefinition()){
-              if (secondaries->at(i)->GetCreatorProcess()->GetProcessName()
-               == "Scintillation")fScintillationCounter++;
-              if (secondaries->at(i)->GetCreatorProcess()->GetProcessName()
-               == "Cerenkov")fCerenkovCounter++;
-           }
+    G4int eventNumber = G4RunManager::GetRunManager()->
+    GetCurrentEvent()->GetEventID();
+    
+    if (eventNumber != fEventNumber) {
+        // G4cout << " Number of Scintillation Photons in previous event: "
+        //        << fScintillationCounter << G4endl;
+        // G4cout << " Number of Cerenkov Photons in previous event: "
+        //        << fCerenkovCounter << G4endl;
+        fEventNumber = eventNumber;
+        fScintillationCounter = 0;
+        fCerenkovCounter = 0;
+    }
+    
+    G4Track* track = step->GetTrack();
+    int parentId = track->GetParentID();
+    
+    // std::cout<<"parentId   "<<parentId <<std::endl;
+    //std::cout<<"length  "<<track->GetTrackLength() << " step num "<< track->GetCurrentStepNumber() <<std::endl;
+    
+    if(track->GetCurrentStepNumber()>50000 || track->GetTrackLength() > 10000) {
+        // std::cout<<"WRN: too many steps or track length > 10m  N=" <<track->GetCurrentStepNumber()<<" Len="<<track->GetTrackLength()/1000. <<std::endl;
+        track->SetTrackStatus(fStopAndKill);
+    }
+    
+    // G4cout<<step->GetPreStepPoint()->GetPhysicalVolume()->GetName()  <<" - "
+    //  	<<step->GetPostStepPoint()->GetPhysicalVolume()->GetName() <<"  "<< G4endl;
+    
+    if(PrtManager::Instance()->GetRunType()==11 && step->GetPreStepPoint()->GetPhysicalVolume()->GetName()=="wBar"
+       && step->GetPostStepPoint()->GetPhysicalVolume()->GetName()=="wOpticalGrease") {
+        G4ThreeVector dir = step->GetPreStepPoint()->GetMomentum();
+        TVector3 v(dir.x(),dir.y(),dir.z());
+        v.RotateY(-(TMath::Pi()-20*TMath::Pi()/180.));
+        PrtManager::Instance()->SetMomentum(v);
+        PrtManager::Instance()->SetTime(step->GetPreStepPoint()->GetLocalTime());
+    }
+    
+    if(PrtManager::Instance()->GetRunType()==13 && step->GetPostStepPoint()->GetPhysicalVolume()->GetName()== "wPixel")track->SetTrackStatus(fStopAndKill);
+    if(PrtManager::Instance()->GetRunType()==13 && step->GetPostStepPoint()->GetPhysicalVolume()->GetName()== "wMcp"&& step->GetPreStepPoint()->GetPhysicalVolume()->GetName()== "wPixel"){
+        
+        //std::cout<<"length  "<<track->GetTrackLength() << " step num "<< track->GetCurrentStepNumber() <<std::endl;
+        
+        G4TouchableHistory* touchable = (G4TouchableHistory*)(step->GetPostStepPoint()->GetTouchable());
+        G4ThreeVector globalpos = step->GetPostStepPoint()->GetPosition();
+        G4ThreeVector localpos = touchable->GetHistory()->GetTopTransform().TransformPoint(globalpos);
+        PrtManager::Instance()->setStartVertix(localpos); // G4ThreeVector
+        //TVector3 localPos(localpos.x(),localpos.y(),localpos.z());
+        //Double_t x(localPos.x()), y(localPos.y()), z(localPos.z());
+        //G4cout<< "###### x = "<<x << " y = "<<y <<" z = "<<z << G4endl;
+        
+        
+        
+    }
+    
+    
+    
+    //if(step->GetPreStepPoint()->GetPhysicalVolume()->GetName()=="Bar" && step->GetPostStepPoint()->GetPhysicalVolume()->GetName()=="ExpHall" ) track->SetTrackStatus(fStopAndKill);
+    //if(step->GetPreStepPoint()->GetPosition().z()>1200 ) track->SetTrackStatus(fStopAndKill);
+    
+    G4String ParticleName = track->GetDynamicParticle()->
+    GetParticleDefinition()->GetParticleName();
+    
+    
+    
+    // std::cout<<"ParticleName "<<ParticleName <<std::endl;
+    
+    if (ParticleName == "opticalphoton") return;
+    
+    const std::vector<const G4Track*>* secondaries =
+    step->GetSecondaryInCurrentStep();
+    
+    if (secondaries->size()>0) {
+        for(unsigned int i=0; i<secondaries->size(); ++i) {
+            if (secondaries->at(i)->GetParentID()>0) {
+                if(secondaries->at(i)->GetDynamicParticle()->GetParticleDefinition()
+                   == G4OpticalPhoton::OpticalPhotonDefinition()){
+                    if (secondaries->at(i)->GetCreatorProcess()->GetProcessName()
+                        == "Scintillation")fScintillationCounter++;
+                    if (secondaries->at(i)->GetCreatorProcess()->GetProcessName()
+                        == "Cerenkov")fCerenkovCounter++;
+                }
+            }
         }
-     }
-  }
+    }
 }
 

@@ -19,6 +19,9 @@
 #include "PrtHit.h"
 #include "PrtTrackInfo.h"
 
+#include "G4ThreeVector.hh"
+
+
 class PrtManager
 {
   static PrtManager* fInstance;
@@ -74,8 +77,11 @@ public:
   void SetInfo(TString val){ fInfo = val; }
   void AddInfo(TString val){ fInfo += val + "\n"; }
   void SetMixPiP(bool val){fMixPiP = val;}
-  
+  void setStartVertix(G4ThreeVector s){ startVertix = s;}
+    
+
   // Accessors
+  G4ThreeVector getStartVertix(){return startVertix;}
   int GetRunType(){ return fRunType; }
   int GetPhysList(){ return fPhysList; }
   int GetGeometry(){ return fGeometry; }
@@ -148,6 +154,8 @@ private:
   TVector3 fnX1;
   TVector3 fnY1;
   Double_t fCriticalAngle;
+    //
+  G4ThreeVector startVertix;
 };
 
 #endif

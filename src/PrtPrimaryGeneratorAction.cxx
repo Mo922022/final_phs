@@ -57,8 +57,8 @@ PrtPrimaryGeneratorAction::PrtPrimaryGeneratorAction():G4VUserPrimaryGeneratorAc
     //            gpix[m][p] =vdirc+(vmcp[m]+vpixminus[p]).rotateY(PrtManager::Instance()->GetAngle()*deg-180*deg);
     //        }
     //    }
-        ftest1 = PrtManager::Instance()->GetTest1();
-        ftest2 = PrtManager::Instance()->GetTest2();
+    ftest1 = PrtManager::Instance()->GetTest1();
+    ftest2 = PrtManager::Instance()->GetTest2();
 }
 
 PrtPrimaryGeneratorAction::~PrtPrimaryGeneratorAction(){
@@ -129,9 +129,10 @@ void PrtPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent){
     // phs space lookup table generation
     if(PrtManager::Instance()->GetRunType() == 13){
         //std::cout<<"############ m["<<mid<<"]" <<" pid = "<< pid<<std::endl; // here
+        G4ThreeVector rand(0,0,0);
         for(auto m=0; m<12; m++){
             for(auto p=0; p<64; p++){
-                vpixminus[p]= G4ThreeVector(vpix[p].x(),vpix[p].y(), vpix[p].z()- 0.6);
+                vpixminus[p]= G4ThreeVector(vpix[p].x(),vpix[p].y(), vpix[p].z() ); // -0.6
                 //vpixminus[p]= G4ThreeVector(vpix[p].x(),vpix[p].y(), vpix[p].z()- 0.6);
                 //std::cout<<"###### m["<<m<<"]" <<" vpixminus[p] = "<< vpixminus[p]<<std::endl; // here
                 gpix[m][p] =vdirc+(vmcp[m]+vpixminus[p]).rotateY(PrtManager::Instance()->GetAngle()*deg-180*deg);
@@ -140,22 +141,25 @@ void PrtPrimaryGeneratorAction::GeneratePrimaries(G4Event* anEvent){
                 G4double sq_diff_length_x(x_pix_length), sq_diff_length_y(y_pix_length), sq_rand_varx((G4UniformRand()-0.5)*x_pix_length), sq_rand_vary ((G4UniformRand()-0.5)*y_pix_length);
                 G4ThreeVector rand= G4ThreeVector(sq_rand_varx,sq_rand_vary, 0).rotateY(PrtManager::Instance()->GetAngle()*deg-180*deg);
                 gpix[m][p]=gpix[m][p]+ rand;
+                vpixminus[p]=vpixminus[p]+ rand;
             }
         }
-                PrtManager::Instance()->AddEvent(PrtEvent());
-                ///////////////
-                // pos dir ////
-                ///////////////
-                fParticleGun->SetParticlePosition(gpix[ftest1][ftest2]);
-                ///////////////
-                // mom dir ////
-                ///////////////
-                G4double angle = -G4UniformRand()*M_PI;
-                G4ThreeVector vec(0,0,1);
-                vec.setTheta(acos(G4UniformRand()));
-                vec.setPhi(2*M_PI*G4UniformRand());
-                vec.rotateY(PrtManager::Instance()->GetAngle()*deg-180*deg);
-                fParticleGun->SetParticleMomentumDirection(-vec);
+        PrtManager::Instance()->AddEvent(PrtEvent());
+        ///////////////
+        // pos dir ////
+        ///////////////
+        fParticleGun->SetParticlePosition(gpix[ftest1][ftest2]);
+        
+        //PrtManager::Instance()->setStartVertix(vpixminus[ftest2]); // add to stepping Acttion
+        ///////////////
+        // mom dir ////
+        ///////////////
+        G4double angle = -G4UniformRand()*M_PI;
+        G4ThreeVector vec(0,0,1);
+        vec.setTheta(acos(G4UniformRand()));
+        vec.setPhi(2*M_PI*G4UniformRand());
+        vec.rotateY(PrtManager::Instance()->GetAngle()*deg-180*deg);
+        fParticleGun->SetParticleMomentumDirection(-vec);
     }
     
     if(PrtManager::Instance()->GetRunType() == 5){ // calibration light

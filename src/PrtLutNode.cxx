@@ -20,7 +20,8 @@ void PrtLutNode::AddEntry(Int_t detectorId, TVector3 dir, Double_t pathid, Int_t
   fTimeArray.push_back(time);
   fHitPos.push_back(hitpos);
   fHitPosGlobal.push_back(hitposGlobal);
-  fDigiPos = digipos;
+  fDigiPos.push_back(digipos);
+  //fDigiPos = digipos;
   fSize++;
 }
 
@@ -44,6 +45,7 @@ void PrtLutNode::AddEntry(Int_t detectorId, TVector3 dir, Double_t pathid, Int_t
   fTimeArray.push_back(time);
   fHitPos.push_back(hitpos);
   fHitPosGlobal.push_back(hitposGlobal);
-  fDigiPos = digipos;
+  fDigiPos.push_back(digipos);
+  //fDigiPos = digipos;
   fSize++;
 }

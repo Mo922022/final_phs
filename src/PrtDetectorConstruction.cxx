@@ -29,6 +29,7 @@
 #include "PrtBarSD.h"
 #include "PrtPrizmSD.h"
 #include "PrtPixelSD.h"
+//#include "PrtPixelSD_dummy.h"
 #define PI 3.14159265
 
 PrtDetectorConstruction::PrtDetectorConstruction()
@@ -572,7 +573,7 @@ G4VPhysicalVolume* PrtDetectorConstruction::Construct(){
     if (PrtManager::Instance()->GetRunType() == 13){
         G4Box* gScan = new G4Box("gScan2",10.0* fBar[0] ,10.0*fBar[1], 0.00000001);// 0.00000001
         
-        G4Tubs* cylinder_filter = new G4Tubs("cylinder_filter",.1 *cm,15.*cm,0.00000001,0.,2*M_PI*rad);//14 0.05 0.1
+        G4Tubs* cylinder_filter = new G4Tubs("cylinder_filter",14 *cm,15.*cm,0.00000001,0.,2*M_PI*rad);//14 0.05 0.1
         lcylinder_filter= new G4LogicalVolume(cylinder_filter, BarMaterial ,"lcylinder_filter",0,0,0);
         
         lScan = new G4LogicalVolume(gScan, BarMaterial ,"lScan",0,0,0);
@@ -856,7 +857,7 @@ G4VPhysicalVolume* PrtDetectorConstruction::Construct(){
     
     // // assignment to pad
     // if(hamamatsu8500)
-    new G4LogicalSkinSurface("HamamatsuPMTSurface",lPixel,HamamatsuPMTOpSurface);
+    //new G4LogicalSkinSurface("HamamatsuPMTSurface",lPixel,HamamatsuPMTOpSurface); // here
     
     // Mirror
     G4OpticalSurface* MirrorOpSurface = new G4OpticalSurface("MirrorOpSurface",glisur,polished,dielectric_metal);
@@ -1230,9 +1231,17 @@ void PrtDetectorConstruction::ConstructSDandField(){
     // Sensitive detectors
     PrtPixelSD* pixelSD = new PrtPixelSD("PixelSD", "PixelHitsCollection", 0);
     G4SDManager::GetSDMpointer()->AddNewDetector(pixelSD);
+    
+    //PrtPixelSD_dummy* pixelSD_dummy = new PrtPixelSD_dummy("PixelSD_dummy", "Pixel_dummyHitsCollection", 0);
+    //G4SDManager::GetSDMpointer()->AddNewDetector(pixelSD_dummy);
+    
     // phs
     if (PrtManager::Instance()->GetRunType() != 13)SetSensitiveDetector("lPixel",pixelSD);
-    if (PrtManager::Instance()->GetRunType() == 13)SetSensitiveDetector("lScan",pixelSD);
+    if (PrtManager::Instance()->GetRunType() == 13){
+        //SetSensitiveDetector("lPixel",pixelSD_dummy);
+        SetSensitiveDetector("lScan",pixelSD);
+        
+    }
     
     PrtPrizmSD* prizmSD = new PrtPrizmSD("PrizmSD", "PrizmHitsCollection", 0);
     G4SDManager::GetSDMpointer()->AddNewDetector(prizmSD);
