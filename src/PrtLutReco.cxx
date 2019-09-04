@@ -150,6 +150,9 @@ TH1F *hLnDiffPi_phs = new TH1F("hLnDiffPi_phs",";ln L(p) - ln L(#pi);entries [#]
 //TH1F *hLnDiffP_phs = new TH1F("hLnDiffP_phs",  ";ln L(p) - ln L(#pi);entries [#]",200,-2000,2000);
 //TH1F *hLnDiffPi_phs = new TH1F("hLnDiffPi_phs",";ln L(p) - ln L(#pi);entries [#]",200,-2000,2000);
 
+TH1F *hLnDiffP_pdf = new TH1F("hLnDiffP_pdf",  ";ln L(p) - ln L(#pi);entries [#]",200,-30,30);// 30000
+TH1F *hLnDiffPi_pdf = new TH1F("hLnDiffPi_pdf",";ln L(p) - ln L(#pi);entries [#]",200,-30,30);// 30000
+
 TF1 *gF1 = new TF1("gaus0","[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2])",0.7,0.9);
 TF1 *gF2= new TF1("gaus0","[0]*exp(-0.5*((x-[1])/[2])*(x-[1])/[2])",0.7,0.9);
 
@@ -178,6 +181,7 @@ TH1F* hist_cherenkov_phs_tcut_test[21];
 
 
 
+
 // -----   Default constructor   -------------------------------------------
 PrtLutReco::PrtLutReco(TString infile, TString lutfile, Int_t verbose) {
     
@@ -196,7 +200,7 @@ PrtLutReco::PrtLutReco(TString infile, TString lutfile, Int_t verbose) {
     
     
     //TString phs_file_path = "/Users/ahmed/final_phs/build/10m_phs_l3_2017_90_f0.2.root";
-    TString phs_file_path = "/Users/ahmed/final_phs/build/1m_phs_l3_2017_90.root";
+    TString phs_file_path = "/Users/ahmed/final_phs/build/10m_phs_l3_2017_90_fixpos_avr_thr10.root";
     
     
     //TString phs_file_path = "/Users/ahmed/final_phs/build/10m_phs_l3_2017_90_f0.2_avr.root";
@@ -321,6 +325,36 @@ void getclusters() {
 //-------------- Loop over tracks ------------------------------------------
 void PrtLutReco::Run(Int_t start, Int_t end) {
     
+    ///////////////
+    // pdf histo///
+    ///////////////
+    TH1F*  histo_t_pdf_p_read[12][64], *histo_t_pdf_pi_read[12][64];
+    TH1F*  histo_t_pdf_p[12][64], *histo_t_pdf_pi[12][64];
+    
+    TFile *ffile_cherenkov_pdf_t;
+    TString cherenkov_pdf_t_path;
+    
+    for(Int_t m=0; m<12; m++) {
+        for(Int_t p=0; p<64; p++) {
+            histo_t_pdf_p[m][p] = new TH1F(Form("histo_t_pdf_p_%dm_%dp",m,p),Form("histo_t_pdf_p_%dm_%dp;#theta_{C} [rad];entries [#]",m,p),   15,0,50); // 250
+            histo_t_pdf_pi[m][p] = new TH1F(Form("histo_t_pdf_pi_%dm_%dp",m,p),Form("histo_t_pdf_pi_%dm_%dp;#theta_{C} [rad];entries [#]",m,p),   15,0,50); // 250
+        }
+    }
+    
+    
+    cherenkov_pdf_t_path ="/Users/ahmed/final_phs/build/outFile_pdf_t.root";
+    cout<<"cherenkov_pdf_t_path= " <<cherenkov_pdf_t_path<<endl;
+    ffile_cherenkov_pdf_t  = new TFile(cherenkov_pdf_t_path, "READ");
+    for(Int_t m=0; m<12; m++) {
+        for(Int_t p=0; p<64; p++) {
+            histo_t_pdf_p_read[m][p] = (TH1F*)ffile_cherenkov_pdf_t->Get(Form("histo_t_pdf_p_%dm_%dp",m,p));
+            histo_t_pdf_pi_read[m][p] = (TH1F*)ffile_cherenkov_pdf_t->Get(Form("histo_t_pdf_pi_%dm_%dp",m,p));
+        }
+    }
+    
+    
+    
+    
     TVector3 direction, direction2  ;
     Double_t time_phs, pos_x, pos_y, pos_z ;
     TVector3 momInBar_phs(0,0,-1), momInBar_phs_0bar(0,0,-1);
@@ -351,7 +385,7 @@ void PrtLutReco::Run(Int_t start, Int_t end) {
     TString outFile = PrtManager::Instance()->GetOutName()+"_spr.root";
     Double_t theta(0),prtphi(0), trr(0),  nph(0),nph_err(0),
     par1(0), par2(0), par3(0), par4(0), par5(0), par6(0), test1(0), test2(0), test3(0),
-    separation(0),separation_phs(0),beamx(0),beamz(0),nnratio(0),nnratio_p(0),nnratio_pi(0);
+    separation(0),separation_phs(0),separation_pdf(0),beamx(0),beamz(0),nnratio(0),nnratio_p(0),nnratio_pi(0);
     Double_t minChangle(0);
     Double_t maxChangle(1);
     Double_t deg = TMath::Pi()/180.;
@@ -445,7 +479,7 @@ void PrtLutReco::Run(Int_t start, Int_t end) {
         
         Int_t pdg[]= {11,13,211,321,2212};
         Double_t mass[] = {0.000511,0.1056584,0.139570,0.49368,0.9382723};
-        Double_t angle1(0), angle2(0),sum1(0),sum2(0),sum1_phs(0),sum2_phs(0), sigma(0.009),range(5*sigma),noise(0.3);
+        Double_t angle1(0), angle2(0),sum1(0),sum2(0),sum1_phs(0),sum2_phs(0),sum1_pdf(0),sum2_pdf(0), sigma(0.009),range(5*sigma),noise(0.3);
         
         fAngleP = acos(sqrt(momentum*momentum+ mass[4]*mass[4])/momentum/1.4738)-0.00; //1.4738 = 370 = 3.35
         fAnglePi= acos(sqrt(momentum*momentum + mass[2]*mass[2])/momentum/1.4738)-0.00; //-0.0014 for 160 25deg
@@ -525,6 +559,8 @@ void PrtLutReco::Run(Int_t start, Int_t end) {
             hit_b4->Fill(hitTime);
             if(fEvent->GetType()!=0) hitTime+=fRand.Gaus(0,test1); // 0.2time resol. in case it was not simulated
             
+
+            
             //======================================== dynamic cuts
             {
                 Double_t cut1(7);
@@ -563,6 +599,11 @@ void PrtLutReco::Run(Int_t start, Int_t end) {
             if(reflected) lenz = 2*radiatorL - lenz;
             Int_t ch = map_mpc[mcpid][pixid];
             if(prt_isBadChannel(ch)) continue;
+            
+            Int_t kp = histo_t_pdf_p_read[mcpid][pixid]->GetXaxis()->FindBin(hitTime);
+            Int_t kpi = histo_t_pdf_pi_read[mcpid][pixid]->GetXaxis()->FindBin(hitTime);
+            sum1_pdf += TMath::Log(histo_t_pdf_p_read[mcpid][pixid]->GetBinContent(kp));
+            sum2_pdf += TMath::Log(histo_t_pdf_pi_read[mcpid][pixid]->GetBinContent(kpi));
             //if(cluster[mcpid][pixid]>8) continue;
             
             // Int_t x(0),y(0), piid(pixid) , nedge(0); //new
@@ -684,7 +725,7 @@ void PrtLutReco::Run(Int_t start, Int_t end) {
                 }// end of phs lut loop
             }
             
-            
+
             
             if(true) {
                 //ref_point =9.8;
@@ -704,7 +745,7 @@ void PrtLutReco::Run(Int_t start, Int_t end) {
                     dir_phs_z=dird_phs.Z();
                     
                     
-                 
+                    
                     
                     //if (dir_phs_x > 0 ) continue; // for 20 deg
                     //if (time_phs<ref_point) continue;
@@ -743,135 +784,153 @@ void PrtLutReco::Run(Int_t start, Int_t end) {
                     if (hitTime >14)momInBar_phs=TVector3(0,0,1);
                     tangle_phs = momInBar_phs.Angle(dird_phs);
                     
-                    
-                    //fcut3->SetParameters(2,8.5,0.48);
-                    //if (tangle_phs < fcut3->Eval(time_phs)) continue;
-                    
-                    hist_time_angle_all_phs->Fill(time_phs,tangle_phs);
-                    hist_time_angle_all_correlation_phs->Fill(hitTime - time_phs, tangle_phs);
-                    hist_time_angle_all_correlation_phs_zoom->Fill(hitTime - time_phs, tangle_phs);
-                    /*
-                     kt = hist_time_angle_all_correlation_phs->GetXaxis()->FindBin(time_phs);
-                     ka = hist_time_angle_all_correlation_phs->GetYaxis()->FindBin(tangle_phs);
-                     kt_center=hist_time_angle_all_correlation_phs->GetXaxis()->GetBinCenter(kt);
-                     ka_center=hist_time_angle_all_correlation_phs->GetYaxis()->GetBinCenter(ka);
-                     //std::cout<< "########################## bin "<<kt<<"time_phs = "<< time_phs<<" "<<kt_center<<std::endl;
-                     //std::cout<< "##########################  tangle_phs = "<< tangle_phs<<" "<<ka_center<<std::endl;
-                     hist_time_angle_all_correlation_phs_center->Fill(hitTime - kt_center, ka_center);
-                     */
-                    //hist_dir_xyz->Fill(dir_phs_x, dir_phs_y, tangle_phs );
-                    //if(tangle_phs > TMath::PiOver2()) tangle_phs = TMath::Pi()-tangle_phs;
-                    if(fabs(tangle_phs-fAngleP)<0.04) {
-                        hist_timeDiff_phs->Fill(hitTime-time_phs);
-                        hist_phsTime->Fill(time_phs);
-                        hist_hitTimed->Fill(hitTime);
-                        hit_phs->Fill(hitTime);
-                        //std::cout<< "##########################  diff =  "<< hitTime - time_phs<<std::endl;
-                    }
+                    //////////////////////////////////////////////
                     
                     
-                    for(auto i=0; i<21; i++) {
+                    // read pdf per pmt
+                    
+//                    Int_t kp = histo_t_pdf_p_read[mcpid][pixid]->GetXaxis()->FindBin(hitTime);
+//                    Int_t kpi = histo_t_pdf_pi_read[mcpid][pixid]->GetXaxis()->FindBin(hitTime);
+//                    sum1_pdf += TMath::Log(histo_t_pdf_p_read[mcpid][pixid]->GetBinContent(kp));
+//                    sum2_pdf += TMath::Log(histo_t_pdf_pi_read[mcpid][pixid]->GetBinContent(kpi));
+                    
+                    // use histograms
+
+                    
+                    if(false){
                         
-                        tcut_test=(Double_t)i/10;
-                        //std::cout<< "##########################  tcut_test "<< tcut_test<<std::endl;
+                        //////////////////////////////////////////////
                         
-                        if(fabs(hitTime - time_phs)<tcut_test ) {
+                        //fcut3->SetParameters(2,8.5,0.48);
+                        //if (tangle_phs < fcut3->Eval(time_phs)) continue;
+                        
+                        hist_time_angle_all_phs->Fill(time_phs,tangle_phs);
+                        hist_time_angle_all_correlation_phs->Fill(hitTime - time_phs, tangle_phs);
+                        hist_time_angle_all_correlation_phs_zoom->Fill(hitTime - time_phs, tangle_phs);
+                        /*
+                         kt = hist_time_angle_all_correlation_phs->GetXaxis()->FindBin(time_phs);
+                         ka = hist_time_angle_all_correlation_phs->GetYaxis()->FindBin(tangle_phs);
+                         kt_center=hist_time_angle_all_correlation_phs->GetXaxis()->GetBinCenter(kt);
+                         ka_center=hist_time_angle_all_correlation_phs->GetYaxis()->GetBinCenter(ka);
+                         //std::cout<< "########################## bin "<<kt<<"time_phs = "<< time_phs<<" "<<kt_center<<std::endl;
+                         //std::cout<< "##########################  tangle_phs = "<< tangle_phs<<" "<<ka_center<<std::endl;
+                         hist_time_angle_all_correlation_phs_center->Fill(hitTime - kt_center, ka_center);
+                         */
+                        //hist_dir_xyz->Fill(dir_phs_x, dir_phs_y, tangle_phs );
+                        //if(tangle_phs > TMath::PiOver2()) tangle_phs = TMath::Pi()-tangle_phs;
+                        if(fabs(tangle_phs-fAngleP)<0.04) {
+                            hist_timeDiff_phs->Fill(hitTime-time_phs);
+                            hist_phsTime->Fill(time_phs);
+                            hist_hitTimed->Fill(hitTime);
+                            hit_phs->Fill(hitTime);
+                            //std::cout<< "##########################  diff =  "<< hitTime - time_phs<<std::endl;
+                        }
+                        
+                        
+                        for(auto i=0; i<21; i++) {
                             
+                            tcut_test=(Double_t)i/10;
+                            //std::cout<< "##########################  tcut_test "<< tcut_test<<std::endl;
                             
-                            //hist_dir_x_tcut_test[i]->Fill(dir_phs_x,tangle_phs);
-                            //hist_dir_y_tcut_test[i]->Fill(dir_phs_y,tangle_phs);
+                            if(fabs(hitTime - time_phs)<tcut_test ) {
+                                
+                                
+                                //hist_dir_x_tcut_test[i]->Fill(dir_phs_x,tangle_phs);
+                                //hist_dir_y_tcut_test[i]->Fill(dir_phs_y,tangle_phs);
+                                
+                                hist_dir_xy_tcut_test[i]->Fill(dir_phs_y, dir_phs_x,tangle_phs);
+                                hist_dir_xy_time_tcut_test[i]->Fill(dir_phs_y, dir_phs_x,fabs(hitTime - time_phs));// time_phs
+                                hist_dir_xy_occy_tcut_test[i]->Fill(dir_phs_y, dir_phs_x);
+                                
+                                kt = hist_dir_xy_tcut_test[i]->GetXaxis()->FindBin(dir_phs_x);
+                                ka = hist_dir_xy_tcut_test[i]->GetYaxis()->FindBin(dir_phs_y);
+                                content_hist_dir_xy=hist_dir_xy_tcut_test[i]->GetBinContent(ka,kt);
+                                content_hist_dir_xy_time=hist_dir_xy_time_tcut_test[i]->GetBinContent(ka,kt);
+                                content_hist_dir_xy_test=hist_dir_xy_occy_tcut_test[i]->GetBinContent(ka,kt);
+                                average_bin=content_hist_dir_xy/content_hist_dir_xy_test;
+                                average_bin_time=content_hist_dir_xy_time/content_hist_dir_xy_test;
+                                //hist_dir_xy_angle_tcut_test[i]->SetBinContent(ka,kt,average_bin);
+                                hist_dir_xy_tdiff_tcut_test[i]->SetBinContent(ka,kt,average_bin_time);
+                                
+                                hist_cherenkov_phs_tcut_test[i]->Fill(tangle_phs,weight);
+                                
+                            }
                             
-                            hist_dir_xy_tcut_test[i]->Fill(dir_phs_y, dir_phs_x,tangle_phs);
-                            hist_dir_xy_time_tcut_test[i]->Fill(dir_phs_y, dir_phs_x,fabs(hitTime - time_phs));// time_phs
-                            hist_dir_xy_occy_tcut_test[i]->Fill(dir_phs_y, dir_phs_x);
-                            
-                            kt = hist_dir_xy_tcut_test[i]->GetXaxis()->FindBin(dir_phs_x);
-                            ka = hist_dir_xy_tcut_test[i]->GetYaxis()->FindBin(dir_phs_y);
-                            content_hist_dir_xy=hist_dir_xy_tcut_test[i]->GetBinContent(ka,kt);
-                            content_hist_dir_xy_time=hist_dir_xy_time_tcut_test[i]->GetBinContent(ka,kt);
-                            content_hist_dir_xy_test=hist_dir_xy_occy_tcut_test[i]->GetBinContent(ka,kt);
-                            average_bin=content_hist_dir_xy/content_hist_dir_xy_test;
-                            average_bin_time=content_hist_dir_xy_time/content_hist_dir_xy_test;
-                            //hist_dir_xy_angle_tcut_test[i]->SetBinContent(ka,kt,average_bin);
-                            hist_dir_xy_tdiff_tcut_test[i]->SetBinContent(ka,kt,average_bin_time);
-                            
-                            hist_cherenkov_phs_tcut_test[i]->Fill(tangle_phs,weight);
                             
                         }
                         
                         
-                    }
-                    
-                    
-                    if(fabs(hitTime - time_phs)>test2 ) continue;
-                    
-                    //std::cout<< "##########################  tangle_phs "<< tangle_phs<<std::endl;
-                    //fHist->Fill(tangle_phs ,weight);
-                    
-                    
-                    
-                    hist_cherenkov_phs->Fill(tangle_phs,weight);
-                    
-                    if (dir_phs_x < fcut->Eval(dir_phs_y) || dir_phs_x > fcut2->Eval(dir_phs_y)) {
+                        if(fabs(hitTime - time_phs)>test2 ) continue;
                         
-                        hist_cherenkov_phs_bg->Fill(tangle_phs,weight);
+                        //std::cout<< "##########################  tangle_phs "<< tangle_phs<<std::endl;
+                        //fHist->Fill(tangle_phs ,weight);
                         
                         
-                    } else {
-                        hist_cherenkov_phs_dir_cut->Fill(tangle_phs,weight);
-                    }
-                    
-                    
-                    hist_dir_x->Fill(dir_phs_x,tangle_phs);
-                    hist_dir_y->Fill(dir_phs_y,tangle_phs);
-                    hist_dir_z->Fill(dir_phs_z,tangle_phs);
-                    
-                    hist_dir_xy->Fill(dir_phs_y, dir_phs_x,tangle_phs);
-                    hist_dir_xy_time->Fill(dir_phs_y, dir_phs_x,fabs(hitTime - time_phs));// time_phs
-                    hist_dir_xy_test->Fill(dir_phs_y, dir_phs_x);
-                    
-                    kt = hist_dir_xy->GetXaxis()->FindBin(dir_phs_x);
-                    ka = hist_dir_xy->GetYaxis()->FindBin(dir_phs_y);
-                    content_hist_dir_xy=hist_dir_xy->GetBinContent(ka,kt);
-                    content_hist_dir_xy_time=hist_dir_xy_time->GetBinContent(ka,kt);
-                    content_hist_dir_xy_test=hist_dir_xy_test->GetBinContent(ka,kt);
-                    average_bin=content_hist_dir_xy/content_hist_dir_xy_test;
-                    average_bin_time=content_hist_dir_xy_time/content_hist_dir_xy_test;
-                    hist_dir_xy_angle->SetBinContent(ka,kt,average_bin);
-                    hist_dir_xy_time_time->SetBinContent(ka,kt,average_bin_time);
-                    
-                    
-                    //////////////
-                    
-                    hist_pos_phs_x_angle->Fill(pos_x,tangle_phs);
-                    hist_pos_phs_y_angle->Fill(pos_y,tangle_phs);
-                    
-                    hist_pos_xy->Fill(pos_x,pos_y,tangle_phs);
-                    hist_pos_xy_test->Fill(pos_x,pos_y);
-                    
-                    kt_pos = hist_pos_xy_test->GetXaxis()->FindBin(pos_x);
-                    ka_pos = hist_pos_xy_test->GetYaxis()->FindBin(pos_y);
-                    
-                    content_hist_pos_phs_xy=hist_pos_xy->GetBinContent(kt_pos,ka_pos);
-                    content_hist_pos_phs_xy_test=hist_pos_xy_test->GetBinContent(kt_pos,ka_pos);
-                    average_bin_pos=content_hist_pos_phs_xy/content_hist_pos_phs_xy_test;
-                    // std::cout<< kt_pos <<" "<<ka_pos<<" "<<content_hist_pos_phs_xy<<" "<<content_hist_pos_phs_xy_test<<" "<<average_bin_pos<<std::endl;
-                    hist_pos_phs_xy_angle->SetBinContent(kt_pos,ka_pos,average_bin_pos);
-                    
-                    // prt_hdigi[mcpid]->Fill(pixid%8, pixid/8);
-                    
-                    if( true && tangle_phs>0.6 && tangle_phs<1 ) {
-                        sum1_phs += TMath::Log(gF1->Eval(tangle_phs)+noise);
-                        sum2_phs += TMath::Log(gF2->Eval(tangle_phs)+noise);
                         
-                        //sum1_phs += TMath::Log(gF1->Eval(ka_center)+noise);
-                        //sum2_phs += TMath::Log(gF2->Eval(ka_center)+noise);
-                    }
-                    ++phs_solution_counter;
-                    //std::cout<< "##########################  phs_solution_counter "<< phs_solution_counter<<std::endl;
-                }// end of phs lut loop
-                hist_phs_solution_number->Fill(phs_solution_counter);
-                //if(phs_solution_counter% 2 == 0)hist_cherenkov_phs->Fill(tangle_phs ,weight);
+                        hist_cherenkov_phs->Fill(tangle_phs,weight);
+                        
+                        if (dir_phs_x < fcut->Eval(dir_phs_y) || dir_phs_x > fcut2->Eval(dir_phs_y)) {
+                            
+                            hist_cherenkov_phs_bg->Fill(tangle_phs,weight);
+                            
+                            
+                        } else {
+                            hist_cherenkov_phs_dir_cut->Fill(tangle_phs,weight);
+                        }
+                        
+                        
+                        hist_dir_x->Fill(dir_phs_x,tangle_phs);
+                        hist_dir_y->Fill(dir_phs_y,tangle_phs);
+                        hist_dir_z->Fill(dir_phs_z,tangle_phs);
+                        
+                        hist_dir_xy->Fill(dir_phs_y, dir_phs_x,tangle_phs);
+                        hist_dir_xy_time->Fill(dir_phs_y, dir_phs_x,fabs(hitTime - time_phs));// time_phs
+                        hist_dir_xy_test->Fill(dir_phs_y, dir_phs_x);
+                        
+                        kt = hist_dir_xy->GetXaxis()->FindBin(dir_phs_x);
+                        ka = hist_dir_xy->GetYaxis()->FindBin(dir_phs_y);
+                        content_hist_dir_xy=hist_dir_xy->GetBinContent(ka,kt);
+                        content_hist_dir_xy_time=hist_dir_xy_time->GetBinContent(ka,kt);
+                        content_hist_dir_xy_test=hist_dir_xy_test->GetBinContent(ka,kt);
+                        average_bin=content_hist_dir_xy/content_hist_dir_xy_test;
+                        average_bin_time=content_hist_dir_xy_time/content_hist_dir_xy_test;
+                        hist_dir_xy_angle->SetBinContent(ka,kt,average_bin);
+                        hist_dir_xy_time_time->SetBinContent(ka,kt,average_bin_time);
+                        
+                        
+                        //////////////
+                        
+                        hist_pos_phs_x_angle->Fill(pos_x,tangle_phs);
+                        hist_pos_phs_y_angle->Fill(pos_y,tangle_phs);
+                        
+                        hist_pos_xy->Fill(pos_x,pos_y,tangle_phs);
+                        hist_pos_xy_test->Fill(pos_x,pos_y);
+                        
+                        kt_pos = hist_pos_xy_test->GetXaxis()->FindBin(pos_x);
+                        ka_pos = hist_pos_xy_test->GetYaxis()->FindBin(pos_y);
+                        
+                        content_hist_pos_phs_xy=hist_pos_xy->GetBinContent(kt_pos,ka_pos);
+                        content_hist_pos_phs_xy_test=hist_pos_xy_test->GetBinContent(kt_pos,ka_pos);
+                        average_bin_pos=content_hist_pos_phs_xy/content_hist_pos_phs_xy_test;
+                        // std::cout<< kt_pos <<" "<<ka_pos<<" "<<content_hist_pos_phs_xy<<" "<<content_hist_pos_phs_xy_test<<" "<<average_bin_pos<<std::endl;
+                        hist_pos_phs_xy_angle->SetBinContent(kt_pos,ka_pos,average_bin_pos);
+                        
+                        // prt_hdigi[mcpid]->Fill(pixid%8, pixid/8);
+                        
+                        if( true && tangle_phs>0.6 && tangle_phs<1 ) {
+                            sum1_phs += TMath::Log(gF1->Eval(tangle_phs)+noise);
+                            sum2_phs += TMath::Log(gF2->Eval(tangle_phs)+noise);
+                            
+                            //sum1_phs += TMath::Log(gF1->Eval(ka_center)+noise);
+                            //sum2_phs += TMath::Log(gF2->Eval(ka_center)+noise);
+                        }
+                        ++phs_solution_counter;
+                        //std::cout<< "##########################  phs_solution_counter "<< phs_solution_counter<<std::endl;
+                    }// end of phs lut loop
+                    hist_phs_solution_number->Fill(phs_solution_counter);
+                    //if(phs_solution_counter% 2 == 0)hist_cherenkov_phs->Fill(tangle_phs ,weight);
+                    
+                }
             }
             
             if(false) {
@@ -1029,7 +1088,25 @@ void PrtLutReco::Run(Int_t start, Int_t end) {
             
             //std::cout<< " sum_phs "<<sum_phs <<std::endl;
             
-            likelihood=sum_phs;
+            //likelihood=sum_phs;
+        }
+        
+        Double_t sum_pdf = sum1_pdf-sum2_pdf;
+        if(sum_pdf!=0) {
+            if(tofPid==2212) {
+                hLnDiffP_pdf->Fill(sum_pdf);
+                //std::cout<< " ####### hLnDiffP_pdf "<<hLnDiffP_pdf->GetEntries() <<std::endl;
+                
+            }
+            if(tofPid==211){
+                hLnDiffPi_pdf->Fill(sum_pdf);
+                //std::cout<< " ####### hLnDiffPi_pdf "<<hLnDiffPi_pdf->GetEntries() <<std::endl;
+                
+            }
+            
+            //std::cout<< " ####### sum_pdf "<<sum_pdf <<std::endl;
+            
+            likelihood=sum_pdf;
         }
         
         // if(fVerbose==1){
@@ -1151,6 +1228,36 @@ void PrtLutReco::Run(Int_t start, Int_t end) {
         hLnDiffP_phs->Draw();
         hLnDiffPi_phs->SetLineColor(4);
         hLnDiffPi_phs->Draw("same");
+        
+        
+        ////////
+        prt_canvasAdd("r_lhood_pdf",800,400);
+        prt_normalize(hLnDiffP_pdf,hLnDiffPi_pdf);
+        hLnDiffP_pdf->SetLineColor(2);
+        
+        Double_t m1_pdf,m2_pdf,s1_pdf,s2_pdf;
+        if(hLnDiffP_pdf->GetEntries()>10) {
+            hLnDiffP_pdf->Fit("gaus","S");
+            ff = hLnDiffP_pdf->GetFunction("gaus");
+            m1_pdf=ff->GetParameter(1);
+            s1_pdf=ff->GetParameter(2);
+        }
+        if(hLnDiffPi_pdf->GetEntries()>10) {
+            hLnDiffPi_pdf->Fit("gaus","S");
+            ff = hLnDiffPi_pdf->GetFunction("gaus");
+            m2_pdf=ff->GetParameter(1);
+            s2_pdf=ff->GetParameter(2);
+        }
+        separation_pdf = (fabs(m2_pdf-m1_pdf))/(0.5*(s1_pdf+s2_pdf));
+        std::cout<<"######### separation_pdf "<< separation_pdf <<std::endl;
+        
+        //gStyle->SetOptFit(0);
+        //gStyle->SetOptStat(0);
+        
+        hLnDiffP_pdf->SetName(Form("s_%2.2f",separation_pdf));
+        hLnDiffP_pdf->Draw();
+        hLnDiffPi_pdf->SetLineColor(4);
+        hLnDiffPi_pdf->Draw("same");
         
         
         prt_canvasSave(1,0);
